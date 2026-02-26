@@ -17,6 +17,7 @@ replace (
 	github.com/golang/protobuf => github.com/golang/protobuf v1.5.4
 	github.com/google/cadvisor => github.com/k3s-io/cadvisor v0.51.0-k3s1
 	github.com/googleapis/gax-go/v2 => github.com/googleapis/gax-go/v2 v2.12.0
+	github.com/k3s-io/kine => github.com/glyasai/kine v0.14.9-k3s1.31
 	github.com/open-policy-agent/opa => github.com/open-policy-agent/opa v0.59.0 // github.com/Microsoft/hcsshim using bad version v0.42.2
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.2.8
 	github.com/opencontainers/selinux => github.com/opencontainers/selinux v1.11.0
@@ -116,8 +117,8 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/k3s-io/api v0.1.3
 	github.com/k3s-io/helm-controller v0.16.16
-	github.com/k3s-io/kine v0.14.6-k3s1.31
-	github.com/klauspost/compress v1.18.1
+	github.com/k3s-io/kine v0.14.9
+	github.com/klauspost/compress v1.18.2
 	github.com/libp2p/go-libp2p v0.43.0
 	github.com/minio/minio-go/v7 v7.0.91
 	github.com/moby/sys/userns v0.1.0
@@ -151,7 +152,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.6.4
 	go.etcd.io/etcd/etcdutl/v3 v3.5.21
 	go.etcd.io/etcd/server/v3 v3.6.4
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.41.0
 	golang.org/x/mod v0.27.0
 	golang.org/x/net v0.43.0
