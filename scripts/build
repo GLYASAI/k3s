@@ -113,6 +113,12 @@ if [ ${ARCH} = s390x ]; then
     export GOARCH="s390x"
 fi
 
+if [ ${ARCH} = arm64 ] && [ "$(uname -m)" = "x86_64" ]; then
+    export GOARCH="arm64"
+    export CC="aarch64-linux-musl-gcc"
+    export CXX="aarch64-linux-musl-g++"
+fi
+
 k3s_binaries=(
     "bin/k3s-agent"
     "bin/k3s-server"

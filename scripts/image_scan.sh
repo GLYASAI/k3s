@@ -32,6 +32,6 @@ TRIVY_TEMPLATE='{{- $critical := 0 }}{{- $high := 0 }}
 {{ end }}
 Vulnerabilities - Critical: {{ $critical }}, High: {{ $high }}{{ println }}'
 
-trivy --quiet image --severity ${SEVERITIES} --no-progress --ignore-unfixed --format template --template "${TRIVY_TEMPLATE}" ${IMAGE}
+trivy --quiet image --severity ${SEVERITIES} --db-repository ghcr.io/aquasecurity/trivy-db --no-progress --ignore-unfixed --format template --template "${TRIVY_TEMPLATE}" ${IMAGE}
 
 exit 0
