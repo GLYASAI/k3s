@@ -14,6 +14,16 @@ REPO=${REPO:-rancher}
 IMAGE_NAME=${IMAGE_NAME:-k3s}
 
 IMAGE=${REPO}/${IMAGE_NAME}:${TAG}
-docker build --build-arg DRONE_TAG=${VERSION_TAG} -t ${IMAGE} -f package/Dockerfile .
+
+# When cross-compiling (e.g. building arm64 on an amd64 host), pass --platform so
+# Docker uses QEMU binfmt_misc to run foreign-arch binaries during the build.
+# QEMU must be registered on the host first:
+#   docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+BUILD_PLATFORM=""
+if [ -n "${ARCH}" ] && [ "${ARCH}" != "$(go env GOARCH)" ]; then
+    BUILD_PLATFORM="--platform linux/${ARCH}"
+fi
+
+docker build ${BUILD_PLATFORM} --build-arg DRONE_TAG=${VERSION_TAG} --build-arg TARGETARCH=${ARCH} -t ${IMAGE} -f package/Dockerfile .
 ./scripts/image_scan.sh ${IMAGE} ${ARCH}
 echo Built ${IMAGE}

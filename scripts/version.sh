@@ -5,6 +5,8 @@ ARCH=${ARCH:-$("${GO}" env GOARCH)}
 OS=${OS:-$("${GO}" env GOOS)}
 SUFFIX="-${ARCH}"
 
+export GOPROXY=${GOPROXY:-https://goproxy.cn,direct}
+
 if [ -z "$NO_DAPPER" ]; then
     . ./scripts/git_version.sh
 fi

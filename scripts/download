@@ -14,6 +14,10 @@ HCSSHIM_DIR=build/src/github.com/microsoft/hcsshim
 DATA_DIR=build/data
 export TZ=UTC
 
+export http_proxy=http://172.16.1.135:3128
+export https_proxy=http://172.16.1.135:3128
+export no_proxy=localhost,127.0.0.1
+
 umask 022
 rm -rf ${CHARTS_DIR}
 rm -rf ${RUNC_DIR}

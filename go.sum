@@ -474,7 +474,7 @@ github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/filecoin-project/go-clock v0.1.0 h1:SFbYIM75M8NnFm1yMHhN9Ahy3W5bEZV9gd6MPfXbKVU=
 github.com/filecoin-project/go-clock v0.1.0/go.mod h1:4uB/O4PvOjlx1VCMdZ9MyDZXRm//gkj1ELEbxfI1AZs=
-github.com/flannel-io/flannel v0.27.4 h1:tz++C0xB9yEku6Y7PYa2PtobpsWpZxga8mXkolo1zTs=
+github.com/flannel-io/flannel v0.27.4 h1:/i1Bj6/wtBoHSJApQYhve7zK4kycDdFa8yyFDZnUiNE=
 github.com/flannel-io/flannel v0.27.4/go.mod h1:3yYRh0umOdrVe9rV81IL4KUSseRv9ICeehA54HeFnCk=
 github.com/flynn/go-shlex v0.0.0-20150515145356-3f9db97f8568/go.mod h1:xEzjJPgXI435gkrCt3MPfRiAkVrwSbHsst4LCFVfpJc=
 github.com/flynn/noise v1.1.0 h1:KjPQoQCEFdZDiP03phOvGi11+SVVhBG2wOWAorLsstg=

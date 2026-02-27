@@ -7,8 +7,51 @@ RUN apk -U --no-cache add \
     zlib-dev tar zip squashfs-tools npm coreutils python3 py3-pip openssl-dev libffi-dev libseccomp \
     libseccomp-dev libseccomp-static make libuv-static sqlite-dev sqlite-static libselinux \
     libselinux-dev zlib-dev zlib-static zstd pigz alpine-sdk binutils-gold btrfs-progs-dev \
-    btrfs-progs-static gawk yq pipx \
-    && [ "$(go env GOARCH)" = "amd64" ] && apk -U --no-cache add mingw-w64-gcc || true
+    btrfs-progs-static gawk yq pipx gperf
+
+# Install cross-compilation toolchains for amd64 hosts (needed to build arm64/windows binaries)
+# Alpine 3.22 removed the aarch64-linux-musl-cross package; download from musl.cc instead.
+RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
+    apk -U --no-cache add mingw-w64-gcc && \
+    curl -fsSL https://musl.cc/aarch64-linux-musl-cross.tgz | tar -xz -C /usr/local && \
+    ln -sf /usr/local/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc /usr/local/bin/aarch64-linux-musl-gcc && \
+    ln -sf /usr/local/aarch64-linux-musl-cross/bin/aarch64-linux-musl-g++ /usr/local/bin/aarch64-linux-musl-g++ && \
+    ln -sf /usr/local/aarch64-linux-musl-cross/bin/aarch64-linux-musl-strip /usr/local/bin/aarch64-linux-musl-strip; \
+    fi
+
+# Cross-compile zlib for aarch64 and install into the musl cross sysroot.
+# The musl toolchain from musl.cc only ships musl libc; -lz must be built separately.
+# libm, libdl, libpthread are all stubs inside musl libc itself and need no extra step.
+ENV ZLIB_VERSION=1.3.2
+RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
+    SYSROOT=/usr/local/aarch64-linux-musl-cross/aarch64-linux-musl && \
+    curl -fsSL https://zlib.net/zlib-${ZLIB_VERSION}.tar.gz | tar -xz -C /tmp && \
+    cd /tmp/zlib-${ZLIB_VERSION} && \
+    CC=aarch64-linux-musl-gcc \
+    CFLAGS="-fPIC" \
+    ./configure --prefix=${SYSROOT} --static && \
+    make -j$(nproc) && make install && \
+    rm -rf /tmp/zlib-*; \
+    fi
+
+# Cross-compile libseccomp for aarch64 and install into the musl cross sysroot.
+# runc is built with the 'seccomp' tag which requires libseccomp headers and static library.
+ENV LIBSECCOMP_VERSION=2.5.5
+RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
+    SYSROOT=/usr/local/aarch64-linux-musl-cross/aarch64-linux-musl && \
+    curl -fsSL https://github.com/seccomp/libseccomp/releases/download/v${LIBSECCOMP_VERSION}/libseccomp-${LIBSECCOMP_VERSION}.tar.gz \
+    | tar -xz -C /tmp && \
+    cd /tmp/libseccomp-${LIBSECCOMP_VERSION} && \
+    ./configure \
+    --host=aarch64-linux-musl \
+    --prefix=${SYSROOT} \
+    --disable-shared \
+    --enable-static \
+    --enable-python=no \
+    CC=aarch64-linux-musl-gcc && \
+    make -j$(nproc) && make install && \
+    rm -rf /tmp/libseccomp-*; \
+    fi
 
 # Install AWS CLI
 RUN PIPX_BIN_DIR=/usr/local/bin pipx install awscli
@@ -22,13 +65,16 @@ RUN case "$(go env GOARCH)" in \
     *) TRIVY_ARCH="" ;; \
     esac
 RUN if [ -n "${TRIVY_ARCH}" ]; then \ 
-        wget --no-verbose "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-${TRIVY_ARCH}.tar.gz" \
-        && tar -zxvf "trivy_${TRIVY_VERSION}_Linux-${TRIVY_ARCH}.tar.gz" \
-        && mv trivy /usr/local/bin; \
+    wget --no-verbose "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-${TRIVY_ARCH}.tar.gz" \
+    && tar -zxvf "trivy_${TRIVY_VERSION}_Linux-${TRIVY_ARCH}.tar.gz" \
+    && mv trivy /usr/local/bin; \
     fi
 
+# Set GOPROXY for all go commands in the container
+ENV GOPROXY=https://goproxy.cn,direct
+
 # Install goimports
-RUN GOPROXY=direct go install golang.org/x/tools/cmd/goimports@gopls/v0.16.0
+RUN go install golang.org/x/tools/cmd/goimports@v0.20.0
 
 # Cleanup
 RUN rm -rf /go/src /go/pkg
@@ -37,14 +83,14 @@ RUN rm -rf /go/src /go/pkg
 RUN if [ "$(go env GOARCH)" = "amd64" ]; then \
     curl -sL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.55.2;  \
     fi
-    
+
 # Set SELINUX environment variable
 ARG SELINUX=true
 ENV SELINUX=${SELINUX}
 
 # Set Dapper configuration variables
 ENV DAPPER_RUN_ARGS="--privileged -v k3s-cache:/go/src/github.com/k3s-io/k3s/.cache -v trivy-cache:/root/.cache/trivy" \
-    DAPPER_ENV="REPO TAG DRONE_TAG IMAGE_NAME SKIP_VALIDATE SKIP_IMAGE SKIP_AIRGAP AWS_SECRET_ACCESS_KEY AWS_ACCESS_KEY_ID GITHUB_TOKEN GOLANG GOCOVER GOOS DEBUG" \
+    DAPPER_ENV="REPO TAG DRONE_TAG IMAGE_NAME SKIP_VALIDATE SKIP_IMAGE SKIP_AIRGAP AWS_SECRET_ACCESS_KEY AWS_ACCESS_KEY_ID GITHUB_TOKEN GOLANG GOCOVER GOOS ARCH DEBUG http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY GOPROXY GONOSUMCHECK GONOSUMDB GONOPROXY" \
     DAPPER_SOURCE="/go/src/github.com/k3s-io/k3s/" \
     DAPPER_OUTPUT="./bin ./dist ./build/out ./build/static ./pkg/static ./pkg/deploy" \
     DAPPER_DOCKER_SOCKET=true \
